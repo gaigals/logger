@@ -37,6 +37,24 @@ if err != nil {
 }
 
 logger.Infof("test message %d", 2)
+
+
+// Or you can make logger without error checks using
+// These function calls will exit with exit code 1 in case if logger creation
+// fails.
+myOtherLogger := logger.NewLoggerOrFatal(
+    appName,
+    logFilePath,
+    enableSyslog,
+    syslogFlags,
+)
+
+logger.NewGlobalLoggerOrFatal(
+    appName,
+    logFilePath,
+    enableSyslog,
+    syslogFlags,
+)
 ```
 
 If you don't want to use file as log output, then set logFilePath as empty
