@@ -1,0 +1,43 @@
+package main
+
+import (
+	"log"
+	"log/syslog"
+
+	"github.com/gaigals/logger"
+)
+
+// Set as false if this is docker build. Syslogs are not supported on docker.
+const isLocalBuild = true
+
+func main() {
+	err := logger.NewGlobalLogger("test", "global.log", isLocalBuild, syslog.LOG_INFO)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	l, err := logger.NewLogger(
+		"test",
+		"instance.log",
+		isLocalBuild,
+		syslog.LOG_INFO|syslog.LOG_USER,
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	l2, err := logger.NewLogger("test", "", isLocalBuild, syslog.LOG_INFO|syslog.LOG_USER)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	logger.Info("Global Info")
+	logger.Error("Global ERORR")
+
+	l.Alert("instance", "alert", 15)
+	l.Warn("instance warn")
+	l.Critical("instance crit")
+	l.Emergancyf("instance emerg=%d", 1)
+
+	l2.Info("instance2", "no file output")
+}

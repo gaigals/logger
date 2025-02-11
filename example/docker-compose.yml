@@ -1,0 +1,7 @@
+services:
+  logger_docker:
+    container_name: "logger_test"
+    build:
+      context: ../
+      dockerfile: example/Dockerfile
+
