@@ -375,12 +375,16 @@ func newSyslog(appName string, flags syslog.Priority) (*syslog.Writer, error) {
 }
 
 func formatLog(level syslog.Priority, msg string, args ...any) string {
+	if len(args) > 0 {
+		msg = fmt.Sprintf(msg, args...)
+	}
+
 	return fmt.Sprintf(
 		"%-7s | %s | %s | %s",
 		logLevelToString(level),
 		time.Now().Format("MST"),
 		time.Now().Format("02/01/2006 15:04:05.000"),
-		fmt.Sprintf(msg, args...),
+		msg,
 	)
 }
 
