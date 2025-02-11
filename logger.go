@@ -192,6 +192,38 @@ func checkFileDir(filePath string) error {
 	return fmt.Errorf("log file dir=%s stat error: %w", parentDir, err)
 }
 
+// NewLoggerOrFatal creates new logger or exits with status code 1 if logger
+// creation failed.
+func NewLoggerOrFatal(
+	appName, logFilePath string,
+	enableSyslog bool,
+	flags syslog.Priority,
+) *Logger {
+	l, err := NewLogger(appName, logFilePath, enableSyslog, flags)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return l
+}
+
+// NewGlobalLoggerOrFatal creates new global logger or exits with status code
+// 1 if logger creation failed.
+func NewGlobalLoggerOrFatal(
+	appName, logFilePath string,
+	enableSyslog bool,
+	flags syslog.Priority,
+) {
+	l, err := newLogger(appName, logFilePath, enableSyslog, flags)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	logger = *l
+}
+
 // NewLogger ...
 func NewLogger(
 	appName, logFilePath string,
