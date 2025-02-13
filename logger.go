@@ -21,84 +21,94 @@ type Logger struct {
 	useStdBackupWritter bool // Use std log package to write logs.
 }
 
+// Printf without applied formatters.
+func (logger *Logger) Printf(format string, args ...any) {
+	logger.printLogf(false, syslog.LOG_INFO, os.Stdout, format, args...)
+}
+
+// Println withotu applied formatters.
+func (logger *Logger) Println(s ...any) {
+	logger.printLog(false, syslog.LOG_INFO, os.Stdout, s...)
+}
+
 // Info ...
 func (logger *Logger) Info(s ...any) {
-	logger.printLog(syslog.LOG_INFO, os.Stdout, s...)
+	logger.printLog(true, syslog.LOG_INFO, os.Stdout, s...)
 }
 
 // Infof
 func (logger *Logger) Infof(format string, args ...any) {
-	logger.printLogf(syslog.LOG_INFO, os.Stdout, format, args...)
+	logger.printLogf(true, syslog.LOG_INFO, os.Stdout, format, args...)
 }
 
 // Debug ...
 func (logger *Logger) Debug(s ...any) {
-	logger.printLog(syslog.LOG_DEBUG, os.Stdout, s...)
+	logger.printLog(true, syslog.LOG_DEBUG, os.Stdout, s...)
 }
 
 // Debugf ...
 func (logger *Logger) Debugf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_DEBUG, os.Stdout, format, args...)
+	logger.printLogf(true, syslog.LOG_DEBUG, os.Stdout, format, args...)
 }
 
 // Warn ...
 func (logger *Logger) Warn(s ...any) {
-	logger.printLog(syslog.LOG_WARNING, os.Stdout, s...)
+	logger.printLog(true, syslog.LOG_WARNING, os.Stdout, s...)
 }
 
 // Warnf ...
 func (logger *Logger) Warnf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_WARNING, os.Stdout, format, args...)
+	logger.printLogf(true, syslog.LOG_WARNING, os.Stdout, format, args...)
 }
 
 // Alert ...
 func (logger *Logger) Alert(s ...any) {
-	logger.printLog(syslog.LOG_ALERT, os.Stdout, s...)
+	logger.printLog(true, syslog.LOG_ALERT, os.Stdout, s...)
 }
 
 // Alertf ...
 func (logger *Logger) Alertf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_ALERT, os.Stdout, format, args...)
+	logger.printLogf(true, syslog.LOG_ALERT, os.Stdout, format, args...)
 }
 
 // Notice ...
 func (logger *Logger) Notice(s ...any) {
-	logger.printLog(syslog.LOG_NOTICE, os.Stdout, s...)
+	logger.printLog(true, syslog.LOG_NOTICE, os.Stdout, s...)
 }
 
 // Noticef ...
 func (logger *Logger) Noticef(format string, args ...any) {
-	logger.printLogf(syslog.LOG_NOTICE, os.Stdout, format, args...)
+	logger.printLogf(true, syslog.LOG_NOTICE, os.Stdout, format, args...)
 }
 
 // Error ...
 func (logger *Logger) Error(s ...any) {
-	logger.printLog(syslog.LOG_ERR, os.Stderr, s...)
+	logger.printLog(true, syslog.LOG_ERR, os.Stderr, s...)
 }
 
 // Errorf ...
 func (logger *Logger) Errorf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_ERR, os.Stderr, format, args...)
+	logger.printLogf(true, syslog.LOG_ERR, os.Stderr, format, args...)
 }
 
 // Critical ...
 func (logger *Logger) Critical(s ...any) {
-	logger.printLog(syslog.LOG_CRIT, os.Stderr, s...)
+	logger.printLog(true, syslog.LOG_CRIT, os.Stderr, s...)
 }
 
 // Criticalf ...
 func (logger *Logger) Criticalf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_CRIT, os.Stderr, format, args...)
+	logger.printLogf(true, syslog.LOG_CRIT, os.Stderr, format, args...)
 }
 
 // Emergency ...
 func (logger *Logger) Emergency(s ...any) {
-	logger.printLog(syslog.LOG_EMERG, os.Stderr, s...)
+	logger.printLog(true, syslog.LOG_EMERG, os.Stderr, s...)
 }
 
 // Emergencyf ...
 func (logger *Logger) Emergancyf(format string, args ...any) {
-	logger.printLogf(syslog.LOG_EMERG, os.Stderr, format, args...)
+	logger.printLogf(true, syslog.LOG_EMERG, os.Stderr, format, args...)
 }
 
 func (logger *Logger) openLogFile(filePath string) error {
@@ -123,8 +133,17 @@ func (logger *Logger) openLogFile(filePath string) error {
 	return nil
 }
 
-func (logger *Logger) printLog(level syslog.Priority, osFile *os.File, s ...any) {
-	msg := logger.formatter(level, fmt.Sprint(s...))
+func (logger *Logger) printLog(
+	applyFormating bool,
+	level syslog.Priority,
+	osFile *os.File,
+	s ...any,
+) {
+	msg := fmt.Sprint(s...)
+
+	if applyFormating {
+		msg = logger.formatter(level, msg)
+	}
 
 	if logger.fileWriter != nil {
 		fmt.Fprintln(logger.fileWriter, msg)
@@ -134,8 +153,18 @@ func (logger *Logger) printLog(level syslog.Priority, osFile *os.File, s ...any)
 	logger.writeToSyslog(level, msg)
 }
 
-func (logger *Logger) printLogf(level syslog.Priority, osFile *os.File, msg string, args ...any) {
-	msg = logger.formatter(level, msg, args...)
+func (logger *Logger) printLogf(
+	applyFormating bool,
+	level syslog.Priority,
+	osFile *os.File,
+	msg string,
+	args ...any,
+) {
+	if applyFormating {
+		msg = logger.formatter(level, msg, args...)
+	} else {
+		msg = fmt.Sprintf(msg, args...)
+	}
 
 	if logger.fileWriter != nil {
 		fmt.Fprintln(logger.fileWriter, msg)

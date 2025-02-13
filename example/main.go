@@ -8,7 +8,7 @@ import (
 )
 
 // Set as false if this is docker build. Syslogs are not supported on docker.
-const isLocalBuild = true
+const isLocalBuild = false
 
 func main() {
 	err := logger.NewGlobalLogger("test", "global.log", isLocalBuild, syslog.LOG_INFO)
@@ -40,4 +40,11 @@ func main() {
 	l.Emergancyf("instance emerg=%d", 1)
 
 	l2.Info("instance2", "no file output")
+
+	l2.Println("instance2", "println")
+	l2.Printf("instance2 printlf=%d\n", 21)
+
+	l3 := logger.NewLoggerOrFatal("test", "test.log", isLocalBuild, syslog.LOG_INFO|syslog.LOG_INFO)
+
+	l3.Debug("instance3 debug test")
 }
