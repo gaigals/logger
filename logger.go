@@ -420,14 +420,15 @@ func formatLog(level syslog.Priority, msg string, args ...any) string {
 
 	return fmt.Sprintf(
 		"%-7s | %s | %s | %s",
-		logLevelToString(level),
+		LogLevelToString(level),
 		time.Now().Format("MST"),
 		time.Now().Format("02/01/2006 15:04:05.000"),
 		msg,
 	)
 }
 
-func logLevelToString(level syslog.Priority) string {
+// LogLevelToString converts syslog priority (log level) as readable string.
+func LogLevelToString(level syslog.Priority) string {
 	switch level {
 	case syslog.LOG_EMERG:
 		return "EMERG"
