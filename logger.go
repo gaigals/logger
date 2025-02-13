@@ -111,6 +111,18 @@ func (logger *Logger) Emergancyf(format string, args ...any) {
 	logger.printLogf(true, syslog.LOG_EMERG, os.Stderr, format, args...)
 }
 
+// Fatalf prints an error and exits with status code 1.
+func (logger *Logger) Fatalf(format string, args ...any) {
+	logger.Errorf(format, args...)
+	os.Exit(1)
+}
+
+// Fatalln prints an error and exits with status code 1.
+func (logger *Logger) Fatalln(s ...any) {
+	logger.Error(s...)
+	os.Exit(1)
+}
+
 func (logger *Logger) openLogFile(filePath string) error {
 	if filePath == "" {
 		return nil
@@ -403,6 +415,18 @@ func Emergency(s ...any) {
 // Emergencyf ...
 func Emergancyf(format string, args ...any) {
 	logger.Emergancyf(format, args...)
+}
+
+// Fatalf prints an error and exits with status code 1.
+func Fatalf(format string, args ...any) {
+	logger.Errorf(format, args...)
+	os.Exit(1)
+}
+
+// Fatalln prints an error and exits with status code 1.
+func Fatalln(s ...any) {
+	logger.Error(s...)
+	os.Exit(1)
 }
 
 func newSyslog(appName string, flags syslog.Priority) (*syslog.Writer, error) {
