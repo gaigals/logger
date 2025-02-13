@@ -123,6 +123,13 @@ func (logger *Logger) Fatalln(s ...any) {
 	os.Exit(1)
 }
 
+// WithFormatter can be used to apply custom formatter function).
+func (logger *Logger) WithFormatter(
+	fn func(level syslog.Priority, msg string, args ...any) string,
+) {
+	logger.formatter = fn
+}
+
 func (logger *Logger) openLogFile(filePath string) error {
 	if filePath == "" {
 		return nil
@@ -449,6 +456,11 @@ func formatLog(level syslog.Priority, msg string, args ...any) string {
 		time.Now().Format("02/01/2006 15:04:05.000"),
 		msg,
 	)
+}
+
+// WithFormatter can be used to apply custom formatter function).
+func WithFormatter(fn func(level syslog.Priority, msg string, args ...any) string) {
+	logger.formatter = fn
 }
 
 // LogLevelToString converts syslog priority (log level) as readable string.
