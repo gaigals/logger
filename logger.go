@@ -315,6 +315,16 @@ func newSysLogger(appName string, flags syslog.Priority) (*syslog.Writer, error)
 	return slog, nil
 }
 
+// Printf without applied formatters.
+func Printf(format string, args ...any) {
+	logger.printLogf(false, syslog.LOG_INFO, os.Stdout, format, args...)
+}
+
+// Println withotu applied formatters.
+func Println(s ...any) {
+	logger.printLog(false, syslog.LOG_INFO, os.Stdout, s...)
+}
+
 // Info ...
 func Info(s ...any) {
 	logger.Info(s...)
