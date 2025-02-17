@@ -15,10 +15,10 @@ var ErrSyslogConnFailed = errors.New("new syslog setup error")
 var logger Logger
 
 type Logger struct {
-	syslogWriter        *syslog.Writer
-	fileWriter          *os.File
-	formatter           func(level syslog.Priority, msg string, args ...any) string
-	useStdBackupWritter bool // Use std log package to write logs.
+	syslogWriter       *syslog.Writer
+	fileWriter         *os.File
+	formatter          func(level syslog.Priority, msg string, args ...any) string
+	disableOsStdOutput bool // Disable stdout, stderr outout.
 }
 
 // Printf without applied formatters.
@@ -168,7 +168,10 @@ func (logger *Logger) printLog(
 		fmt.Fprintln(logger.fileWriter, msg)
 	}
 
-	fmt.Fprintln(osFile, msg)
+	if !logger.disableOsStdOutput {
+		fmt.Fprintln(osFile, msg)
+	}
+
 	logger.writeToSyslog(level, msg)
 }
 
@@ -189,7 +192,10 @@ func (logger *Logger) printLogf(
 		fmt.Fprintln(logger.fileWriter, msg)
 	}
 
-	fmt.Fprintln(osFile, msg)
+	if !logger.disableOsStdOutput {
+		fmt.Fprintln(osFile, msg)
+	}
+
 	logger.writeToSyslog(level, msg)
 }
 
@@ -244,10 +250,17 @@ func checkFileDir(filePath string) error {
 // creation failed.
 func NewLoggerOrFatal(
 	appName, logFilePath string,
-	enableSyslog bool,
+	enableSyslog,
+	disableStdOutput bool, // Disable stdout, stderr.
 	flags syslog.Priority,
 ) *Logger {
-	l, err := NewLogger(appName, logFilePath, enableSyslog, flags)
+	l, err := NewLogger(
+		appName,
+		logFilePath,
+		enableSyslog,
+		disableStdOutput,
+		flags,
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -260,10 +273,17 @@ func NewLoggerOrFatal(
 // 1 if logger creation failed.
 func NewGlobalLoggerOrFatal(
 	appName, logFilePath string,
-	enableSyslog bool,
+	enableSyslog,
+	disableStdOutput bool, // Disable stdout, stderr.
 	flags syslog.Priority,
 ) {
-	l, err := newLogger(appName, logFilePath, enableSyslog, flags)
+	l, err := newLogger(
+		appName,
+		logFilePath,
+		enableSyslog,
+		disableStdOutput,
+		flags,
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -275,10 +295,17 @@ func NewGlobalLoggerOrFatal(
 // NewLogger ...
 func NewLogger(
 	appName, logFilePath string,
-	enableSyslog bool,
+	enableSyslog,
+	disableStdOutput bool, // Disable stdout, stderr.
 	flags syslog.Priority,
 ) (*Logger, error) {
-	l, err := newLogger(appName, logFilePath, enableSyslog, flags)
+	l, err := newLogger(
+		appName,
+		logFilePath,
+		enableSyslog,
+		disableStdOutput,
+		flags,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -287,8 +314,19 @@ func NewLogger(
 }
 
 // NewGlobalLogger ...
-func NewGlobalLogger(appName, logFilePath string, enableSyslog bool, flags syslog.Priority) error {
-	l, err := newLogger(appName, logFilePath, enableSyslog, flags)
+func NewGlobalLogger(
+	appName, logFilePath string,
+	enableSyslog,
+	disableStdOutput bool, // Disable stdout, stderr.
+	flags syslog.Priority,
+) error {
+	l, err := newLogger(
+		appName,
+		logFilePath,
+		enableSyslog,
+		disableStdOutput,
+		flags,
+	)
 	if err != nil {
 		return err
 	}
@@ -299,7 +337,8 @@ func NewGlobalLogger(appName, logFilePath string, enableSyslog bool, flags syslo
 
 func newLogger(
 	appName, logFilePath string,
-	enableSyslog bool,
+	enableSyslog,
+	disableStdOutput bool, // Disable stdout, stderr.
 	flags syslog.Priority,
 ) (*Logger, error) {
 	var err error
@@ -313,8 +352,9 @@ func newLogger(
 	}
 
 	l := Logger{
-		syslogWriter: syslogWriter,
-		formatter:    formatLog,
+		syslogWriter:       syslogWriter,
+		formatter:          formatLog,
+		disableOsStdOutput: disableStdOutput,
 	}
 
 	err = l.openLogFile(logFilePath)
@@ -438,7 +478,7 @@ func Fatalln(s ...any) {
 
 func newSyslog(appName string, flags syslog.Priority) (*syslog.Writer, error) {
 	if flags == 0 {
-		flags = syslog.LOG_INFO | syslog.LOG_SYSLOG
+		flags = syslog.LOG_USER
 	}
 
 	return syslog.New(flags, appName)
